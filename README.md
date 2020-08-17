@@ -1,6 +1,16 @@
-# DECEV (**dec**orator **ev**ents)
+# DECEV (**dec**orator **ev**ents) by @dantechguy
 
 A teeny library for event handling which uses decorators for event subscription
+
+## Installation
+
+Either copy decev/decev.py into your directory, or run
+
+```
+pip install decev
+```
+
+then import into your file with `import decev`
 
 ## Usage
 
