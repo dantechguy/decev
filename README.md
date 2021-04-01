@@ -1,4 +1,4 @@
-# DECEV (**dec**orator **ev**ents) by @dantechguy
+# DECEV (*dec*orator *ev*ents) by @dantechguy
 
 A teeny library for event handling which uses decorators for event subscription
 
@@ -14,12 +14,12 @@ then import into your file with `import decev`
 
 ## Usage
 
-**1. Create an EventHandler object and events**
+**1. Create an EventHandler object**
 
 ```py
 import decev
 # pass list of event names
-events = decev.EventHandler(['firstEvent', 'event_two', 'LAST_EVENT'])
+events = decev.EventHandler()
 ```
 
 **2. Add functions to events**
@@ -44,15 +44,21 @@ def myOtherFunction():
 *Methods can only have the `self` argument*
 
 ```py
+# class decorator is required for methods to work
+@events.cls
 class MyClass:
     def __init__(self):
-        # this must be run for methods to be subscribed
-        events.subscribe_tagged_methods(self)
+        print('initialised!')
         
     # add myMethod to LAST_EVENT
     @events.LAST_EVENT
     def myMethod(self):
         print('myMethod')
+        
+    # and unbound methods work too
+    @events.LAST_EVENT
+    def myOtherMethod():
+        print('myOtherMethod')
 
 # create instance of class        
 myObject = MyClass()
@@ -61,6 +67,7 @@ myObject = MyClass()
 **4. Run events**
 
 ```py
+print()
 events.run('firstEvent')
 print()
 events.run('event_two')
@@ -72,12 +79,15 @@ Which produces this:
 
 ```
 > py main.py
+initialised!
+
 myOtherFunction
 myFunction
 
 myOtherFunction
 
 myMethod
+myOtherMethod
 ```
 
 ## How it works
@@ -86,6 +96,6 @@ Any functions added with **zero** arguments are assumed to be regular functions,
 
 <br>
 
-Any functions added with **one** argument are assumed to be methods (the argument being `self`), and are *tagged* with the corresponding event. Later, when `subscribe_tagged_methods` is called, all tagged methods are then subscribed to the event.
+Any functions added with **one** argument are assumed to be methods (the argument being `self`), and are *tagged* with the events. The class decorator inserts some code into the class' `__init__` method to automatically subscribe these tagged methods once an instance has been created. 
 
-The reason we tag *then* subscribe for methods is because when the function would *usually* be subscribed, there is no value for `self` (there isn't an instance), so the method is *unbound*. Only once an instance has been created, we run `subscribe_tagged_methods` in its `__init__` to successfully subscribe all methods now that there is a value for `self`.
+The reason methods cannot be subscribed immediately, is that at the time of decorator execution no instance has been created, so the `self` parameter has not been filled, so the method is **unbound** and will not run properly. Therefore, the method can only be subscribed after instantiation.

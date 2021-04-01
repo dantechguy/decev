@@ -1,90 +1,53 @@
 import inspect
 
+
 class EventHandler:
-    def __init__(self, event_names):
-        self._events = {
-            event_name: Event(event_name)
-            for event_name in event_names
-        }
-        self._function_tag_name = '_events'
-    
+    def __init__(self):
+        self._events = {}  # { 'event1': { <function object>, <function object>} }
+        self._function_tag = '_events'
+
     def run(self, event_name):
-        event = self._get_event(event_name)
-        event.run()
-        
-    def subscribe_tagged_methods(self, object):
-        for method_name in dir(object):
-            method = getattr(object, method_name)
-            event_names = getattr(method, self._function_tag_name, [])
-            for event_name in event_names:
-                self._get_event(event_name).subscribe_function(method)
-    
-    def __getattr__(self, event_name): # decorator function
-        if self._event_exists(event_name):
-            return self._get_event_function_subscriber_decorator(event_name)
-        else:
-            raise AttributeError(f'No event with name {event_name}')
-            
-            
-    def _event_exists(self, event_name):
-        return event_name in self._events
-    
-    def _get_event_function_subscriber_decorator(self, event_name):
-        event = self._get_event(event_name)
+        for callback in self._events.get(event_name, []):
+            callback()
+
+    def cls(self, cls):
+        old_init = cls.__init__
+
+        # this is the new __init__ for the class
+        def new_init(obj, *args, **kwargs):  # obj -> self
+            # get all methods in object
+            for method_name in dir(obj):
+                method = getattr(obj, method_name)
+                # get any & all event names stored in method's `_events` attribute
+                events_names = getattr(method, self._function_tag, [])
+                # for each event name
+                for event_name in events_names:
+                    # add the callback to the event's set
+                    self.add_callback(method, event_name)
+
+            # and run the old __init__ as if nothing happened (don't replace in case they want to re-run this)
+            old_init(obj, *args, **kwargs)
+
+        # and add the new __init__
+        cls.__init__ = new_init
+        return cls
+
+    def add_callback(self, function, event_name):
+        if event_name not in self._events:
+            self._events[event_name] = set()
+        self._events[event_name].add(function)
+
+    def __getattr__(self, event_name):  # decorator function
         def decorator(function):
-            wrapped_function = FunctionWrapper(function)
-            self._handle_decorator_function_subscription(event, wrapped_function)
-            return wrapped_function.function
+            parameters = len(inspect.signature(function).parameters)
+            if parameters == 0:  # unbound function, add straight away
+                self.add_callback(function, event_name)
+            elif parameters == 1:  # method, requires self, tagged for later subscription
+                event_names = getattr(function, self._function_tag, []) + [event_name]
+                setattr(function, self._function_tag, event_names)
+            else:  # too many parameters, throw error
+                raise TypeError(f'{function.__name__}() was added to {event_name} event but had too many parameters')
+
+            return function
+
         return decorator
-        
-    def _get_event(self, event_name):
-        return self._events[event_name]
-        
-    def _handle_decorator_function_subscription(self, event, wrapped_function):
-        if wrapped_function.has_no_parameters():
-            event.subscribe_function(wrapped_function.function)
-        elif wrapped_function.has_one_parameter():
-            wrapped_function.tag_for_later_subscription(self._function_tag_name, event.name)
-        else:
-            raise TypeError(f'{wrapped_function.get_name()}() was added to {event_name} event but had too many parameters')
-
-
-
-class Event:
-    def __init__(self, name):
-        self.name = name
-        self._functions = set()
-        
-    def run(self):
-        for function in self._functions:
-            function()
-        
-    def subscribe_function(self, function):
-        self._functions.add(function)
-        
-    def subscribe_function_if_has_no_parameters(self, wrapped_function):
-        if wrapped_function.has_no_parameters():
-            self.subscribe_function(function)
-
-        
-        
-class FunctionWrapper:
-    def __init__(self, function):
-        self.function = function
-        
-    def get_name(self):
-        return self.function.__name__
-        
-    def tag_for_later_subscription(self, attribute_name, event_name):
-        list_of_event_names = getattr(self.function, attribute_name, [])
-        list_of_event_names.append(event_name)
-        setattr(self.function, attribute_name, list_of_event_names)
-        
-    def has_no_parameters(self):
-        return self.number_of_parameters() == 0
-        
-    def has_one_parameter(self):
-        return self.number_of_parameters() == 1
-        
-    def number_of_parameters(self):
-        return len(inspect.signature(self.function).parameters)

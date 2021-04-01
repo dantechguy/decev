@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="decev",
-    version="0.0.1",
+    version="1.0.0",
     author="Dan W-B",
     author_email="d@nielwb.com",
     description="Event handlers with decorators",
