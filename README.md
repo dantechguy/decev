@@ -18,7 +18,6 @@ then import into your file with `import decev`
 
 ```py
 import decev
-# pass list of event names
 events = decev.EventHandler()
 ```
 
@@ -41,7 +40,7 @@ def myOtherFunction():
 
 **3. Add methods to events**
 
-*Methods can only have the `self` argument*
+*You need a class decorator, and methods can only have the `self` argument*
 
 ```py
 # class decorator is required for methods to work
