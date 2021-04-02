@@ -107,4 +107,4 @@ myArgFunction foo=100 bar=False
 
 All functions added with `@events.your_event` are subscribed immediately to `events`'s callback dictionary.
 
-As instance methods require the `self` parameter, they can only be subscribed once the class has been instantiated and `self` has a value. The alternate `@events.m.your_event` syntax instead *tags* the method, storing the event names and event handler, and inserts a code snippet into the object's `__init__` method to subscribe the events on instantiation.
+As instance methods require the `self` parameter, they can only be subscribed once the class has been instantiated and `self` has a value. The alternate `@events.m.your_event` syntax instead *tags* the method, storing the event names and event handler. The `@decev.cls` class decorator then inserts a code snippet into the object's `__init__` method to subscribe the events on instantiation.
