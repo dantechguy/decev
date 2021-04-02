@@ -2,6 +2,13 @@
 
 A teeny library for event handling which uses decorators for event subscription
 
+## Overview
+
+- Add functions to events with `@event.your_event` decorators
+- Add instance methods to events with `@event.m.your_event` decorators
+- Run events with `event.run('your_event')`
+- Pass arguments with events with `event.run('your_event', 'bar', foo=True)`
+
 ## Installation
 
 Either copy decev/decev.py into your directory, or run
@@ -16,16 +23,16 @@ then import into your file with `import decev`
 
 **1. Create an EventHandler object**
 
-```py
+```python
 import decev
 events = decev.EventHandler()
 ```
 
 **2. Add functions to events**
 
-*Event functions cannot have any arguments*
+*A single function can have multiple events*
 
-```py
+```python
 # add myFunction to firstEvent
 @events.firstEvent
 def myFunction():
@@ -40,22 +47,18 @@ def myOtherFunction():
 
 **3. Add methods to events**
 
-*You need a class decorator, and methods can only have the `self` argument*
+*Use `@events.m.your_event` to add methods with `self` parameter*
 
-```py
-# class decorator is required for methods to work
-@events.cls
-class MyClass:
-    def __init__(self):
-        print('initialised!')
-        
-    # add myMethod to LAST_EVENT
-    @events.LAST_EVENT
+```python
+class MyClass:      
+    # add myMethod to THIRD_EVENT
+    @events.m.firstEvent
+    @events.m.THIRD_EVENT
     def myMethod(self):
         print('myMethod')
         
-    # and unbound methods work too
-    @events.LAST_EVENT
+    # add unbound myOtherMethod to THIRD_EVENT
+    @events.THIRD_EVENT
     def myOtherMethod():
         print('myOtherMethod')
 
@@ -63,38 +66,45 @@ class MyClass:
 myObject = MyClass()
 ```
 
-**4. Run events**
+**4. Receive arguments in callbacks**
 
-```py
-print()
+*Make sure the parameters match the arguments passed into `events.run()`*
+
+```python
+@events.ArgEvent
+def myArgFunction(foo, bar=True):
+    print(f'myArgFunction foo={foo} bar={bar}')
+``` 
+
+**5. Run events**
+
+```python
 events.run('firstEvent')
 print()
 events.run('event_two')
 print()
 events.run('LAST_EVENT')
+print()
+events.run('ArgEvent', 100, bar=False)
 ```
 
 Which produces this:
 
 ```
 > py main.py
-initialised!
-
 myOtherFunction
 myFunction
 
 myOtherFunction
 
-myMethod
 myOtherMethod
+myMethod
+
+myArgFunction foo=100 bar=False
 ```
 
 ## How it works
 
-Any functions added with **zero** arguments are assumed to be regular functions, and are subscribed immediately to the event.
+All functions added with `@events.your_event` are subscribed immediately to `events`'s callback dictionary.
 
-<br>
-
-Any functions added with **one** argument are assumed to be methods (the argument being `self`), and are *tagged* with the events. The class decorator inserts some code into the class' `__init__` method to automatically subscribe these tagged methods once an instance has been created. 
-
-The reason methods cannot be subscribed immediately, is that at the time of decorator execution no instance has been created, so the `self` parameter has not been filled, so the method is **unbound** and will not run properly. Therefore, the method can only be subscribed after instantiation.
+As instance methods require the `self` parameter, they can only be subscribed once the class has been instantiated and `self` has a value. The alternate `@events.m.your_event` syntax instead *tags* the method, storing the event names and event handler, and inserts a code snippet into the object's `__init__` method to subscribe the events on instantiation.
