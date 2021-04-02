@@ -7,11 +7,16 @@
 ## 1.0.0
 
 - Replaced `events.subscribe_tagged_methods()` with the `events.cls` class decorator
-- Reworked internal code
+- Simplified internal code
 
 ## 1.1.0
 
 - Removed the `events.cls` class decorator
-- Allowed classes to subscribe to multiple `EventHandlers`
+- Allowed classes to subscribe to different `EventHandlers`'s events
 - Allowed events to pass arguments
-- (And therefore) require users to add methods with `events.m.EVENT_NAME` syntax
+- (And therefore) require users to add methods with `@events.m.EVENT_NAME` syntax
+
+## 1.2.0
+
+- Added `decev.cls` class decorator
+- Simplified internal code

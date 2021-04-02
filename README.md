@@ -4,8 +4,8 @@ A teeny library for event handling which uses decorators for event subscription
 
 ## Overview
 
-- Add functions to events with `@event.your_event` decorators
-- Add instance methods to events with `@event.m.your_event` decorators
+- Add functions to events with the `@event.your_event` decorator
+- Add instance methods to events with the `@decev.cls` class decorator and then the `@event.m.your_event` or `@event.method.your_event`method decorator
 - Run events with `event.run('your_event')`
 - Pass arguments with events with `event.run('your_event', 'bar', foo=True)`
 
@@ -47,12 +47,12 @@ def myOtherFunction():
 
 **3. Add methods to events**
 
-*Use `@events.m.your_event` to add methods with `self` parameter*
+*Use the `@decev.cls` class decorator and `@events.m.your_event` to add methods with a `self` parameter*
 
 ```python
+@decev.cls
 class MyClass:      
     # add myMethod to THIRD_EVENT
-    @events.m.firstEvent
     @events.m.THIRD_EVENT
     def myMethod(self):
         print('myMethod')

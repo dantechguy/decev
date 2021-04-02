@@ -1,1 +1,1 @@
-from .decev import EventHandler
+from .decev import EventHandler, cls
